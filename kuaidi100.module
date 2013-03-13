@@ -9,6 +9,67 @@
  * Provides features interacting with kuaidi100 api.
  */
 
+/**
+ * Implementation of hook_menu().
+ */
+function kuaidi100_menu() {
+	$items['admin/config/services/kuadi100'] = array(
+		'title' => 'kuaidi100 settings',
+		'description' => 'kuaidi100 configuration',
+		'access arguments' => array('access administration pages'),
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('kuaidi100_admin_form'),
+	);
+	return $items;
+}
+
+function kuaidi100_admin_form($form, $form_state) {
+	$form=array(
+		'#validate' => array('kuaidi100_admin_form_validate'),
+		'#submit' => array('kuaidi100_admin_form_submit'),
+	);
+	$form['siteurl']=array(
+		'#type' => 'item',
+		'#title' => t('Current site URL'),
+		'#markup' => $GLOBALS['base_root'],
+	);
+	$form['key']=array(
+		'#type' => 'textfield',
+		'#title' => t('Your api key'),
+		'#description' => t('Please go <a href="@url">here</a> to apply your api key.', array('@url'=>'http://www.kuaidi100.com/openapi/')),
+		'#required' => TRUE,
+		'#size' => 20,
+		'#maxlength' => 16,
+		'#default_value' => variable_get('kuaidi100_api_key', ''),
+	);
+	return system_settings_form($form);
+}
+
+function kuaidi100_admin_form_validate($form, $form_state) {
+	if(empty($form_state['values']['key'])) return;
+	$url=sprintf('http://api.kuaidi100.com/api?id=%s&com=yuantong&nu=000000&show=0', $form_state['values']['key']);
+	$response=drupal_http_request($url);
+	if($response->code != '200') {
+		form_set_error('key', t('There are communicate error connecting kuaidi100, please try later.'));
+		return;
+	}
+	$resp=json_decode($response->data);
+	if($resp->status=='0' && is_null($resp->pattern))
+		form_set_error('key', $resp->message);
+	
+}
+
+function kuaidi100_admin_form_submit($form, $form_state) {
+	variable_set('kuaidi100_api_key', $form_state['values']['key']);
+}
+
+function kuaidi100_query($com, $orderno) {
+	return 0;
+}
+
+/**
+ * Implementation of hook_cron().
+ */
 function kuaidi100_cron() {
 }
 
