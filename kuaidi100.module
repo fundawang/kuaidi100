@@ -63,22 +63,35 @@ function kuaidi100_admin_form_submit($form, $form_state) {
 	variable_set('kuaidi100_api_key', $form_state['values']['key']);
 }
 
-function kuaidi100_query($com, $orderno) {
+function kuaidi100_update_status($com, $orderno) {
 	$pattern='http://api.kuaidi100.com/api?id=%s&com=%s&nu=%s&show=0&muti=0';
 	$url=sprintf($pattern, variable_get('kuaidi100_api_key', ''), $com, $orderno);
 	$response=drupal_http_request($url);
 	if($response->code != '200') {
-		return FALSE;
+		return;
 	}
 	$resp=json_decode($response->data);
 	switch($resp->status) {
 		case 1:
 			switch($resp->state) {
-				case 3: return TRUE;
-				default: return array('state' => $resp->state, 'message' => $resp->message);
+				case 3:
+					db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
+						'status'=>3,
+						'statustext' => t('Delivered'),
+					))->execute();
+					break;
+				default:
+					db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
+						'status'=>$resp->state,
+						'statustext' => $resp->message,
+					))->execute();
 			}
 			break;
-		default: return FALSE;
+		default:
+			db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
+				'status'=>$r->status-1,
+				'statustext' => t('Error'),
+			))->execute();
 	}
 }
 
@@ -89,23 +102,25 @@ function kuaidi100_cron() {
 	$query=db_select('deliverlog','dl')->fields('dl')->condition(db_or()->condition('dl.status',3, '<>')->isNull('dl.status'));
 	$result=$query->execute();
 	foreach($result as $r) {
-		$q=kuaidi100_query($r->com, $r->orderno);
-		if($q===TRUE)
-			db_update('deliverlog')->condition('com',$r->com)->condition('orderno',$r->orderno)->fields(array(
-				'status'=>3,
-				'statustext' => t('Delivered'),
-			))->execute();
-		else if($q==FALSE)
-			db_update('deliverlog')->condition('com',$r->com)->condition('orderno',$r->orderno)->fields(array(
-				'status'=>$r->status-1,
-				'statustext' => t('Error'),
-			))->execute();
-		else 
-			db_update('deliverlog')->condition('com',$r->com)->condition('orderno',$r->orderno)->fields(array(
-				'status'=>$q->state,
-				'statustext' => $q->message,
-			))->execute();
+		if($r->status==-3) continue;
+		kuaidi100_update_status($r->com, $r->orderno);
 	}
+}
+
+function kuaidi100_get_status($module, $type) {
+	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.module',$module)->condition('dl.type',$type);
+	$result=$query->execute();
+	if($result->rowCount()==0) return FALSE;
+	else return $result->fetchObject();
+}
+
+function kuaidi100_save($module, $type, $com, $orderno) {
+	db_merge('deliverlog')
+		->key(array('module' => $module, 'type' => $type))
+		->fields(array(
+			'com' => $com,
+			'orderno' => $orderno
+		))->execute();
 }
 
 /**
