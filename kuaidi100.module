@@ -1,0 +1,21 @@
+<?php
+
+/*
+ * This file is licensed under GPLv2+.
+*/
+
+/**
+ * @file
+ * Provides features interacting with kuaidi100 api.
+ */
+
+function kuaidi100_cron() {
+}
+
+/**
+ *  * Implementation of hook_uninstall().
+ *   */
+function kuaidi100_uninstall() {
+	variable_del('kuaidi100_api_key');
+}
+

@@ -1,0 +1,6 @@
+name = Kuaidi100
+description = Provides features interacting with kuaidi100 api.
+package = 
+core = 7.x
+
+version = 0.1.20130313
