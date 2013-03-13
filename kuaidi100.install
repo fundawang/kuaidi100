@@ -57,6 +57,13 @@ function kuaidi100_schema() {
 			),
 		),
 		'primary key' => array('tid'),
+		'indexes' => array(
+			'com' => array('com'),
+			'module' => array('module'),
+			'orderno' => array('orderno'),
+			'status' => array('status'),
+			'type' => array('type'),
+		),
 	);
 
 	return $schema;

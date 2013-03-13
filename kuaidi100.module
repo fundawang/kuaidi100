@@ -64,13 +64,48 @@ function kuaidi100_admin_form_submit($form, $form_state) {
 }
 
 function kuaidi100_query($com, $orderno) {
-	return 0;
+	$pattern='http://api.kuaidi100.com/api?id=%s&com=%s&nu=%s&show=0&muti=0';
+	$url=sprintf($pattern, variable_get('kuaidi100_api_key', ''), $com, $orderno);
+	$response=drupal_http_request($url);
+	if($response->code != '200') {
+		return FALSE;
+	}
+	$resp=json_decode($response->data);
+	switch($resp->status) {
+		case 1:
+			switch($resp->state) {
+				case 3: return TRUE;
+				default: return array('state' => $resp->state, 'message' => $resp->message);
+			}
+			break;
+		default: return FALSE;
+	}
 }
 
 /**
  * Implementation of hook_cron().
  */
 function kuaidi100_cron() {
+	$query=db_select('deliverlog','dl')->fields('dl')->condition(db_or()->condition('dl.status',3, '<>')->isNull('dl.status'));
+	$result=$query->execute();
+	foreach($result as $r) {
+		$q=kuaidi100_query($r->com, $r->orderno);
+		if($q===TRUE)
+			db_update('deliverlog')->condition('com',$r->com)->condition('orderno',$r->orderno)->fields(array(
+				'status'=>3,
+				'statustext' => t('Delivered'),
+			))->execute();
+		else if($q==FALSE)
+			db_update('deliverlog')->condition('com',$r->com)->condition('orderno',$r->orderno)->fields(array(
+				'status'=>$r->status-1,
+				'statustext' => t('Error'),
+			))->execute();
+		else 
+			db_update('deliverlog')->condition('com',$r->com)->condition('orderno',$r->orderno)->fields(array(
+				'status'=>$q->state,
+				'statustext' => $q->message,
+			))->execute();
+	}
 }
 
 /**
