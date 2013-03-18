@@ -75,7 +75,7 @@ function kuaidi100_update_status($com, $orderno) {
 		$referrer=$response->data;
 	}
 		
-	$response=drupal_http_request($url, array('headers'=>'Referer: '.$referrer));
+	$response=drupal_http_request($url, array('headers'=>array('Referer'=>$referrer)));
 	if($response->code != '200') {
 		return;
 	}
