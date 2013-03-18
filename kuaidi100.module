@@ -66,12 +66,16 @@ function kuaidi100_admin_form_submit($form, $form_state) {
 function kuaidi100_update_status($com, $orderno) {
 	$pattern='http://api.kuaidi100.com/api?id=%s&com=%s&nu=%s&show=0&muti=0';
 	$url=sprintf($pattern, variable_get('kuaidi100_api_key', ''), $com, $orderno);
+	$referrer=$GLOBALS['base_root'];
 	if(in_array($com, array('shunfeng','ems'))) {
+		$url=sprintf('http://www.kuaidi100.com/applyurl?key=%s&com=%s&nu=%s', variable_get('kuaidi100_api_key', ''), $com, $orderno);
+		$response=drupal_http_request($url);
 		$pattern='http://www.kuaidi100.com/query?id=1&type=%s&postid=%s';
 		$url=sprintf($pattern, $com, $orderno);
+		$referrer=$response->data;
 	}
 		
-	$response=drupal_http_request($url);
+	$response=drupal_http_request($url, array('headers'=>'Referer: '.$referrer));
 	if($response->code != '200') {
 		return;
 	}
