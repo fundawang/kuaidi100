@@ -86,19 +86,10 @@ function kuaidi100_update_status($com, $orderno) {
 	switch($resp->status) {
 		case 1:
 		case 200:
-			switch($resp->state) {
-				case 3:
-					db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
-						'status'=>3,
-						'statustext' => t('Delivered'),
-					))->execute();
-					break;
-				default:
-					db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
-						'status'=>$resp->state,
-						'statustext' => $resp->message,
-					))->execute();
-			}
+			db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
+				'status'=>$resp->state,
+				'statustext' => $resp->data[0]->context,
+			))->execute();
 			break;
 		default:
 			db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
@@ -125,6 +116,17 @@ function kuaidi100_get_status($module, $type) {
 	$result=$query->execute();
 	if($result->rowCount()==0) return FALSE;
 	else return $result->fetchObject();
+}
+
+function kuadi100_resolve_state_code($code=NULL) {
+	switch($code) {
+		case 0: return t('Delivering');
+		case 1: return t('Detached');
+		case 2: return t('Under difficulty');
+		case 3: return t('Delivered');
+		case 4: return t('Refunded');
+		default: return FALSE;
+	}
 }
 
 function kuaidi100_save($module, $type, $com, $orderno) {
