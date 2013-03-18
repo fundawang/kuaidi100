@@ -75,9 +75,10 @@ function kuaidi100_update_status($com, $orderno) {
 	if($response->code != '200') {
 		return;
 	}
-	$resp=json_decode($response->data);
-	if(isset($resp->status)) settype($resp->status, 'int');
-	if(isset($resp->state)) settype($resp->status, 'int');
+	$resp=json_decode(preg_replace('/\'/','"',$response->data));
+	if(isset($resp->status)) settype($resp->status, 'integer');
+	if(isset($resp->state)) settype($resp->status, 'integer');
+	
 	switch($resp->status) {
 		case 1:
 		case 200:
