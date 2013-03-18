@@ -66,13 +66,21 @@ function kuaidi100_admin_form_submit($form, $form_state) {
 function kuaidi100_update_status($com, $orderno) {
 	$pattern='http://api.kuaidi100.com/api?id=%s&com=%s&nu=%s&show=0&muti=0';
 	$url=sprintf($pattern, variable_get('kuaidi100_api_key', ''), $com, $orderno);
+	if(in_array($com, array('shunfeng','ems'))) {
+		$pattern='http://www.kuaidi100.com/query?id=1&type=%s&postid=%s';
+		$url=sprintf($pattern, $com, $orderno);
+	}
+		
 	$response=drupal_http_request($url);
 	if($response->code != '200') {
 		return;
 	}
 	$resp=json_decode($response->data);
+	if(isset($resp->status)) settype($resp->status, 'int');
+	if(isset($resp->state)) settype($resp->status, 'int');
 	switch($resp->status) {
 		case 1:
+		case 200:
 			switch($resp->state) {
 				case 3:
 					db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
