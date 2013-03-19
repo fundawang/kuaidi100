@@ -75,7 +75,12 @@ function kuaidi100_update_status($com, $orderno) {
 		$referrer=$response->data;
 	}
 		
-	$response=drupal_http_request($url, array('headers'=>array('Referer'=>$referrer)));
+	$response=drupal_http_request($url, array(
+		'headers'=>array(
+			'Referer'=>$referrer,
+			'Content-Type'=>'application/x-www-form-urlencoded',
+		)
+	));
 	if($response->code != '200') {
 		return;
 	}
@@ -136,6 +141,7 @@ function kuaidi100_save($module, $type, $com, $orderno) {
 			'com' => $com,
 			'orderno' => $orderno
 		))->execute();
+	kuaidi100_update_status($com, $orderno);
 }
 
 /**
