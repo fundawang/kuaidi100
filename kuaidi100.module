@@ -125,6 +125,10 @@ function kuaidi100_get_status($module, $type) {
 
 function kuadi100_resolve_state_code($code=NULL) {
 	switch($code) {
+		case -4:
+		case -3:
+		case -2:
+		case -1: return t('Error');
 		case 0: return t('Delivering');
 		case 1: return t('Detached');
 		case 2: return t('Under difficulty');
