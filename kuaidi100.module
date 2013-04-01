@@ -112,7 +112,6 @@ function kuaidi100_cron() {
 	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.status',3, '<>')->condition('dl.status',-3,'>');
 	$result=$query->execute();
 	foreach($result as $r) {
-		if($r->status==-3) continue;
 		kuaidi100_update_status($r->com, $r->orderno);
 	}
 }
