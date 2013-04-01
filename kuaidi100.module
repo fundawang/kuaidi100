@@ -109,7 +109,7 @@ function kuaidi100_update_status($com, $orderno) {
  * Implementation of hook_cron().
  */
 function kuaidi100_cron() {
-	$query=db_select('deliverlog','dl')->fields('dl')->condition(db_or()->condition('dl.status',3, '<>')->isNull('dl.status'));
+	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.status',3, '<>')->condition('dl.status',-3,'>');
 	$result=$query->execute();
 	foreach($result as $r) {
 		if($r->status==-3) continue;
