@@ -68,6 +68,7 @@ function kuaidi100_schema() {
 			'module' => array('module'),
 			'orderno' => array('orderno'),
 			'status' => array('status'),
+			'timestamp' => array('timestamp'),
 			'type' => array('type'),
 		),
 	);
