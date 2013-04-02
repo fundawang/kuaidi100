@@ -55,6 +55,12 @@ function kuaidi100_schema() {
 				'length' => '100',
 				'not null' => FALSE,
 			),
+			'timestamp' => array(
+				'type' => 'int',
+				'not null' => TRUE,
+				'default' => 0,
+				'description' => 'Unix timestamp of last update',
+			),
 		),
 		'primary key' => array('tid'),
 		'indexes' => array(

@@ -91,9 +91,11 @@ function kuaidi100_update_status($com, $orderno) {
 	switch($resp->status) {
 		case 1:
 		case 200:
+			$d=date_parse_from_format('Y-m-d H:i:s', $resp->updatetime);
 			db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
 				'status'=>$resp->state,
 				'statustext' => $resp->data[0]->context,
+				'timestamp' => mktime($d['hour'], $d['minute'], $d['second'], $d['month'], $d['day'], $d['year']),
 			))->execute();
 			break;
 		default:
@@ -101,6 +103,7 @@ function kuaidi100_update_status($com, $orderno) {
 			db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
 				'status'=>$r->status-1,
 				'statustext' => $resp->message,
+				'timestamp' => time(),
 			))->execute();
 	}
 }
@@ -117,7 +120,7 @@ function kuaidi100_cron() {
 }
 
 function kuaidi100_get_status($module, $type) {
-	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.module',$module)->condition('dl.type',$type);
+	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.module',$module)->condition('dl.type',$type)->condition('dl.timestamp',time()-7200,'<');
 	$result=$query->execute();
 	if($result->rowCount()==0) return FALSE;
 	else return $result->fetchObject();
