@@ -112,7 +112,7 @@ function kuaidi100_update_status($com, $orderno) {
  * Implementation of hook_cron().
  */
 function kuaidi100_cron() {
-	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.status',3, '<>')->condition('dl.status',-3,'>');
+	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.status',3, '<>')->condition('dl.status',-3,'>')->condition('dl.timestamp',time()-7200,'<');
 	$result=$query->execute();
 	foreach($result as $r) {
 		kuaidi100_update_status($r->com, $r->orderno);
@@ -120,7 +120,7 @@ function kuaidi100_cron() {
 }
 
 function kuaidi100_get_status($module, $type) {
-	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.module',$module)->condition('dl.type',$type)->condition('dl.timestamp',time()-7200,'<');
+	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.module',$module)->condition('dl.type',$type);
 	$result=$query->execute();
 	if($result->rowCount()==0) return FALSE;
 	else return $result->fetchObject();
