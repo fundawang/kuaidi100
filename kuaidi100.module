@@ -36,7 +36,7 @@ function kuaidi100_admin_form($form, $form_state) {
 	$form['key']=array(
 		'#type' => 'textfield',
 		'#title' => t('Your api key'),
-		'#description' => t('Please go <a href="@url">here</a> to apply your api key.', array('@url'=>'http://www.kuaidi100.com/openapi/')),
+		'#description' => t('Please go <a href="@url" target="_blank">here</a> to apply your api key.', array('@url'=>'http://www.kuaidi100.com/openapi/')),
 		'#required' => TRUE,
 		'#size' => 20,
 		'#maxlength' => 16,
@@ -91,7 +91,10 @@ function kuaidi100_update_status($com, $orderno) {
 	switch($resp->status) {
 		case 1:
 		case 200:
-			$d=date_parse_from_format('Y-m-d H:i:s', $resp->updatetime);
+			if($resp->state==3)
+				$d=date_parse_from_format('Y-m-d H:i:s', $resp->data[0]->time);
+			else
+				$d=date_parse_from_format('Y-m-d H:i:s', $resp->updatetime);
 			db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
 				'status'=>$resp->state,
 				'statustext' => $resp->data[0]->context,
