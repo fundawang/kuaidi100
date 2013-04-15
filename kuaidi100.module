@@ -10,6 +10,25 @@
  */
 
 /**
+ * Implementation of hook_help().
+ */
+function kuaidi100_help($path, $arg) {
+	switch($path) {
+		case 'admin/config/services/kuaidi100':
+			$num=db_select('deliverlog','d')->fields('d',array('com','orderno'))->distinct()->countQuery()->execute()->fetchField();
+			if($num>0) {
+				$n=db_select('deliverlog','d')->fields('d',array('com','orderno'))->condition('d.status',3)->distinct()->countQuery()->execute()->fetchField();
+				if($n>0)
+					$output=t('Kuaidi100 has tracked @num orders for you, while @n of them have been delivered.',array('@num'=>$num, '@n'=>$n));
+				else
+					$output=t('Kuaidi100 has tracked @num orders for you, none of them has been delivered till now.',array('@num'=>$num));
+			}
+	}
+	if(isset($output))
+		return $output;
+}
+
+/**
  * Implementation of hook_menu().
  */
 function kuaidi100_menu() {
