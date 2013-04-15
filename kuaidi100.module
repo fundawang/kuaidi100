@@ -19,7 +19,10 @@ function kuaidi100_help($path, $arg) {
 			if($num>0) {
 				$n=db_select('deliverlog','d')->fields('d',array('com','orderno'))->condition('d.status',3)->distinct()->countQuery()->execute()->fetchField();
 				if($n>0)
-					$output=t('Kuaidi100 has tracked @num orders for you, while @n of them have been delivered.',array('@num'=>$num, '@n'=>$n));
+					if($n==$num)
+						$output=t('Kuaidi100 has tracked @num orders for you, all of them have been delivered.',array('@num'=>$num));
+					else
+						$output=t('Kuaidi100 has tracked @num orders for you, while @n of them have been delivered.',array('@num'=>$num, '@n'=>$n));
 				else
 					$output=t('Kuaidi100 has tracked @num orders for you, none of them has been delivered till now.',array('@num'=>$num));
 			}
