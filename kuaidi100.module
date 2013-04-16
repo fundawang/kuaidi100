@@ -92,6 +92,7 @@ function kuaidi100_update_status($com, $orderno) {
 	if(in_array($com, array('shunfeng','ems','shentong'))) {
 		$url=sprintf('http://www.kuaidi100.com/applyurl?key=%s&com=%s&nu=%s', variable_get('kuaidi100_api_key', ''), $com, $orderno);
 		$response=drupal_http_request($url);
+		if($response->code != '200') return;
 		$pattern='http://www.kuaidi100.com/query?id=1&type=%s&postid=%s';
 		$url=sprintf($pattern, $com, $orderno);
 		$referrer=$response->data;
