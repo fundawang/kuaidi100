@@ -10,6 +10,24 @@
  */
 
 /**
+ * Implementation of hook_requirements().
+ */
+function kuaidi100_requirements($phase) {
+	$requirements = array();
+
+	if ($phase == 'runtime') {
+		$t = get_t();
+		$num=db_select('deliverlog','d')->fields('d',array('com','orderno'))->distinct()->countQuery()->execute()->fetchField();
+		$requirements['kuaidi100'] = array(
+			'title' => t('Kuaidi100 Tracks'),
+			'severity' => REQUIREMENT_INFO,
+			'value' => t('@num orders have been tracked', array('@num' => $num)),
+		);
+	}
+	return $requirements;
+}
+
+/**
  * Implementation of hook_schema().
  */
 function kuaidi100_schema() {
