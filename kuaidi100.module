@@ -152,7 +152,7 @@ function kuaidi100_get_status($module, $type) {
 	else return $result->fetchObject();
 }
 
-function kuadi100_resolve_state_code($code=NULL) {
+function kuaidi100_resolve_state_code($code=NULL) {
 	switch($code) {
 		case -4:
 		case -3:
