@@ -125,12 +125,13 @@ function kuaidi100_update_status($com, $orderno) {
 			))->execute();
 			break;
 		default:
-			$r=db_select('deliverlog','d')->condition('d.com',$com)->condition('d.orderno',$orderno)->fields('d')->execute()->fetchObject();
-			db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
-				'status'=>$r->status-1,
-				'statustext' => $resp->message,
-				'timestamp' => time(),
-			))->execute();
+			$r=db_select('deliverlog','d')->condition('d.status',-3,'>')->condition('d.com',$com)->condition('d.orderno',$orderno)->fields('d')->execute()->fetchObject();
+			if(!empty($r))
+				db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
+					'status'=>$r->status-1,
+					'statustext' => $resp->message,
+					'timestamp' => time(),
+				))->execute();
 	}
 }
 
