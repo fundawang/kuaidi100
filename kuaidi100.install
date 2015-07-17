@@ -17,7 +17,7 @@ function kuaidi100_requirements($phase) {
 
 	if ($phase == 'runtime') {
 		$t = get_t();
-		$num=db_select('deliverlog','d')->fields('d',array('com','orderno'))->distinct()->countQuery()->execute()->fetchField();
+		$num=db_query('SELECT COUNT(*) FROM (SELECT DISTINCT com, orderno FROM {deliverlog}) t')->fetchField();
 		$requirements['kuaidi100'] = array(
 			'title' => t('Kuaidi100 Tracks'),
 			'severity' => REQUIREMENT_INFO,

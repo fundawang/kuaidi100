@@ -15,9 +15,9 @@
 function kuaidi100_help($path, $arg) {
 	switch($path) {
 		case 'admin/config/services/kuaidi100':
-			$num=db_select('deliverlog','d')->fields('d',array('com','orderno'))->distinct()->countQuery()->execute()->fetchField();
+		$num=db_query('SELECT COUNT(*) FROM (SELECT DISTINCT com, orderno FROM {deliverlog}) t')->fetchField();
 			if($num>0) {
-				$n=db_select('deliverlog','d')->fields('d',array('com','orderno'))->condition('d.status',3)->distinct()->countQuery()->execute()->fetchField();
+				$n=db_query('SELECT COUNT(*) FROM (SELECT DISTINCT com, orderno FROM {deliverlog} WHERE status=3) t')->fetchField();
 				if($n>0)
 					if($n==$num)
 						$output=t('Kuaidi100 has tracked @num orders for you, all of them have been delivered.',array('@num'=>$num));
@@ -90,18 +90,14 @@ function kuaidi100_update_status($com, $orderno) {
 	$url=sprintf($pattern, variable_get('kuaidi100_api_key', ''), $com, $orderno);
 	$referrer=$GLOBALS['base_root'];
 	if(in_array($com, array('shunfeng','ems','shentong'))) {
-		$url=sprintf('http://www.kuaidi100.com/applyurl?key=%s&com=%s&nu=%s', variable_get('kuaidi100_api_key', ''), $com, $orderno);
-		$response=drupal_http_request($url);
-		if($response->code != '200') return;
-		$pattern='http://www.kuaidi100.com/query?id=1&type=%s&postid=%s';
-		$url=sprintf($pattern, $com, $orderno);
-		$referrer=$response->data;
+		$url=sprintf('http://api.kuaidi100.com/api?id=%s&com=%s&nu=%s&show=0&muti=0&order=desc',
+			variable_get('kuaidi100_api_key',''), $com, $orderno);
 	}
 		
 	$response=drupal_http_request($url, array(
 		'headers'=>array(
-			'Referer'=>$referrer,
 			'Content-Type'=>'application/x-www-form-urlencoded',
+			'User-Agent' => 'Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1667.0 Safari/537.36'
 		)
 	));
 	if($response->code != '200') {
@@ -110,6 +106,8 @@ function kuaidi100_update_status($com, $orderno) {
 	$resp=json_decode(preg_replace('/\'/','"',$response->data));
 	if(isset($resp->status)) settype($resp->status, 'integer');
 	if(isset($resp->state)) settype($resp->status, 'integer');
+
+	if($resp->status!=1) return;
 	
 	switch($resp->status) {
 		case 1:
@@ -124,8 +122,11 @@ function kuaidi100_update_status($com, $orderno) {
 				'timestamp' => mktime($d['hour'], $d['minute'], $d['second'], $d['month'], $d['day'], $d['year']),
 			))->execute();
 			break;
+		case 201:
+			break;
 		default:
-			$r=db_select('deliverlog','d')->condition('d.status',-3,'>')->condition('d.com',$com)->condition('d.orderno',$orderno)->fields('d')->execute()->fetchObject();
+			$r=db_query('SELECT * FROM {deliverlog} WHERE status>-3 AND com=:com AND orderno=:orderno',
+				array(':com'=>$com, ':orderno'=>$orderno))->fetchObject();
 			if(!empty($r))
 				db_update('deliverlog')->condition('com',$com)->condition('orderno',$orderno)->fields(array(
 					'status'=>$r->status-1,
@@ -139,20 +140,18 @@ function kuaidi100_update_status($com, $orderno) {
  * Implementation of hook_cron().
  */
 function kuaidi100_cron() {
-	$query=db_select('deliverlog','dl')->fields('dl',array('com','orderno','timestamp'))->condition('dl.status',3, '<>')->condition('dl.status',-3,'>')->condition('dl.timestamp',time()-7200,'<')->distinct()->orderBy('timestamp');
-	$result=$query->execute();
+	$result=db_query('SELECT DISTINCT com, orderno, timestamp FROM {deliverlog} WHERE (status<>3 AND status<>-3 AND timestamp<:time) OR '.
+		'status is NULL ORDER BY timestamp, RAND() LIMIT 100', array(':time'=>time()-7200));
 	$i=0;
 	foreach($result as $r) {
-		$i++;
-		usleep(rand(1,2048));
+		debug($r);
+		drush_log($r);
 		kuaidi100_update_status($r->com, $r->orderno);
-		if($i>=10) return;
 	}
 }
 
 function kuaidi100_get_status($module, $type) {
-	$query=db_select('deliverlog','dl')->fields('dl')->condition('dl.module',$module)->condition('dl.type',$type);
-	$result=$query->execute();
+	$result=db_query('SELECT * FROM {deliverlog} WHERE module=:module AND type=:type', array(':module'=>$module, ':type'=>$type));
 	if($result->rowCount()==0) return FALSE;
 	else return $result->fetchObject();
 }
@@ -163,7 +162,8 @@ function kuaidi100_resolve_state_code($code=NULL) {
 		case -3:
 		case -2:
 		case -1: return t('Error');
-		case 0: return t('Delivering');
+		case 0:
+		case 5: return t('Delivering');
 		case 1: return t('Detached');
 		case 2: return t('Under difficulty');
 		case 3: return t('Delivered');
